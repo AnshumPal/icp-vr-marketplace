@@ -1,0 +1,23 @@
+# Node.js
+node_modules/
+npm-debug.log
+
+# ICP SDK
+.dfx/
+.cache/
+canister_ids.json
+
+# Rust
+target/
+Cargo.lock
+
+# Frontend
+frontend/build/
+*.env
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/
