@@ -3,6 +3,7 @@ import { Search, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useWallet } from "@/hooks/useWallet";
+import { Link, useLocation } from "wouter";
 
 interface HeaderProps {
   onOpenMintModal: () => void;
@@ -11,28 +12,50 @@ interface HeaderProps {
 export default function Header({ onOpenMintModal }: HeaderProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const { user, connectWallet, isConnecting } = useWallet();
+  const [location] = useLocation();
 
   return (
     <header className="glass-morphism border-b border-neon-cyan/20 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center space-x-8">
-            <div className="flex items-center space-x-2">
+            <Link href="/" className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-gradient-to-r from-neon-cyan to-neon-purple rounded-lg flex items-center justify-center">
                 <span className="font-bold text-sm">VR</span>
               </div>
               <span className="text-xl font-bold gradient-text">VRMarket</span>
-            </div>
+            </Link>
             <nav className="hidden md:flex space-x-6">
-              <a href="#" className="text-white hover:text-neon-cyan transition-colors">Marketplace</a>
+              <Link 
+                href="/" 
+                className={`transition-colors ${
+                  location === "/" ? "text-neon-cyan" : "text-gray-400 hover:text-neon-cyan"
+                }`}
+              >
+                Marketplace
+              </Link>
               <button 
                 onClick={onOpenMintModal}
                 className="text-gray-400 hover:text-neon-cyan transition-colors"
               >
                 Create
               </button>
-              <a href="#" className="text-gray-400 hover:text-neon-cyan transition-colors">My Assets</a>
-              <a href="#" className="text-gray-400 hover:text-neon-cyan transition-colors">Analytics</a>
+              <Link 
+                href="/my-assets" 
+                className={`transition-colors ${
+                  location === "/my-assets" ? "text-neon-cyan" : "text-gray-400 hover:text-neon-cyan"
+                }`}
+              >
+                My Assets
+              </Link>
+              <Link 
+                href="/analytics" 
+                className={`transition-colors ${
+                  location === "/analytics" ? "text-neon-cyan" : "text-gray-400 hover:text-neon-cyan"
+                }`}
+              >
+                Analytics
+              </Link>
             </nav>
           </div>
           
