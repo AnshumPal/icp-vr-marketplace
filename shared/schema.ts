@@ -1,4 +1,5 @@
 import { pgTable, text, serial, integer, boolean, timestamp, decimal } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -71,3 +72,35 @@ export type Transaction = typeof transactions.$inferSelect;
 export type VRAssetWithOwner = VRAsset & {
   owner: User;
 };
+
+// Relations
+export const usersRelations = relations(users, ({ many }) => ({
+  ownedAssets: many(vrAssets),
+  soldTransactions: many(transactions, { relationName: "seller" }),
+  purchasedTransactions: many(transactions, { relationName: "buyer" }),
+}));
+
+export const vrAssetsRelations = relations(vrAssets, ({ one, many }) => ({
+  owner: one(users, {
+    fields: [vrAssets.ownerId],
+    references: [users.id],
+  }),
+  transactions: many(transactions),
+}));
+
+export const transactionsRelations = relations(transactions, ({ one }) => ({
+  asset: one(vrAssets, {
+    fields: [transactions.assetId],
+    references: [vrAssets.id],
+  }),
+  buyer: one(users, {
+    fields: [transactions.buyerId],
+    references: [users.id],
+    relationName: "buyer",
+  }),
+  seller: one(users, {
+    fields: [transactions.sellerId],
+    references: [users.id],
+    relationName: "seller",
+  }),
+}));

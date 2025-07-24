@@ -17,7 +17,8 @@ Preferred communication style: Simple, everyday language.
 
 ### Backend Architecture
 - **Express.js Server**: RESTful API with middleware for logging and error handling
-- **Memory Storage**: In-memory data storage with interface for future database integration
+- **PostgreSQL Database**: Drizzle ORM with Neon serverless database integration
+- **Database Storage**: Full database persistence replacing in-memory storage
 - **Development Setup**: Vite integration for hot module replacement in development
 
 ### Key Components
@@ -82,8 +83,19 @@ Preferred communication style: Simple, everyday language.
 - Static file serving from Express for SPA
 
 ### Database Integration
-- Drizzle ORM configured for PostgreSQL connection
-- Migration system ready via `drizzle-kit`
-- Memory storage interface allows easy database swap
+- Drizzle ORM configured for PostgreSQL connection with Neon serverless
+- Database schema with proper relations between users, assets, and transactions
+- Sample data seeded with 8 users and 8 VR assets for demonstration
+- Migration system via `drizzle-kit` with `npm run db:push`
 
-The application uses a cyberpunk aesthetic with neon colors and glass morphism effects. The architecture supports easy scaling from the current in-memory storage to a full PostgreSQL database setup.
+The application uses a cyberpunk aesthetic with neon colors and glass morphism effects. The architecture now uses a complete PostgreSQL database setup with proper data persistence and seeded sample data.
+
+## Recent Changes
+
+**January 24, 2025** - Database Integration Complete
+- ✓ Added PostgreSQL database with Neon serverless connection
+- ✓ Implemented Drizzle ORM with proper table relations
+- ✓ Replaced in-memory storage with DatabaseStorage class
+- ✓ Created and pushed database schema with `drizzle-kit`
+- ✓ Seeded database with 8 sample users and 8 VR assets
+- ✓ All API endpoints now serve real data from database

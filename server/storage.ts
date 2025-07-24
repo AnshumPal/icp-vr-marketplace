@@ -1,4 +1,6 @@
 import { users, vrAssets, transactions, type User, type InsertUser, type VRAsset, type InsertVRAsset, type Transaction, type InsertTransaction, type VRAssetWithOwner } from "@shared/schema";
+import { db } from "./db";
+import { eq, desc } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -316,4 +318,165 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export class DatabaseStorage implements IStorage {
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
+  }
+
+  async getUserByWalletAddress(walletAddress: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.walletAddress, walletAddress));
+    return user || undefined;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
+    return user;
+  }
+
+  async updateUserBalance(id: number, balance: string): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set({ balance })
+      .where(eq(users.id, id))
+      .returning();
+    return user || undefined;
+  }
+
+  async getAssets(): Promise<VRAssetWithOwner[]> {
+    const result = await db
+      .select()
+      .from(vrAssets)
+      .leftJoin(users, eq(vrAssets.ownerId, users.id))
+      .orderBy(desc(vrAssets.createdAt));
+
+    return result
+      .filter(row => row.users !== null)
+      .map(row => ({
+        ...row.vr_assets,
+        owner: row.users!
+      }));
+  }
+
+  async getAssetById(id: number): Promise<VRAssetWithOwner | undefined> {
+    const result = await db
+      .select()
+      .from(vrAssets)
+      .leftJoin(users, eq(vrAssets.ownerId, users.id))
+      .where(eq(vrAssets.id, id));
+
+    const row = result[0];
+    if (!row || !row.users) return undefined;
+
+    return {
+      ...row.vr_assets,
+      owner: row.users
+    };
+  }
+
+  async getAssetsByOwner(ownerId: number): Promise<VRAssetWithOwner[]> {
+    const result = await db
+      .select()
+      .from(vrAssets)
+      .leftJoin(users, eq(vrAssets.ownerId, users.id))
+      .where(eq(vrAssets.ownerId, ownerId))
+      .orderBy(desc(vrAssets.createdAt));
+
+    return result
+      .filter(row => row.users !== null)
+      .map(row => ({
+        ...row.vr_assets,
+        owner: row.users!
+      }));
+  }
+
+  async createAsset(insertAsset: InsertVRAsset): Promise<VRAsset> {
+    const [asset] = await db
+      .insert(vrAssets)
+      .values(insertAsset)
+      .returning();
+    return asset;
+  }
+
+  async updateAssetOwner(id: number, newOwnerId: number): Promise<VRAsset | undefined> {
+    const [asset] = await db
+      .update(vrAssets)
+      .set({ ownerId: newOwnerId, updatedAt: new Date() })
+      .where(eq(vrAssets.id, id))
+      .returning();
+    return asset || undefined;
+  }
+
+  async createTransaction(insertTransaction: InsertTransaction): Promise<Transaction> {
+    const [transaction] = await db
+      .insert(transactions)
+      .values(insertTransaction)
+      .returning();
+    return transaction;
+  }
+
+  async getTransactionsByUser(userId: number): Promise<Transaction[]> {
+    const buyerTransactions = await db
+      .select()
+      .from(transactions)
+      .where(eq(transactions.buyerId, userId))
+      .orderBy(desc(transactions.createdAt));
+
+    const sellerTransactions = await db
+      .select()
+      .from(transactions)
+      .where(eq(transactions.sellerId, userId))
+      .orderBy(desc(transactions.createdAt));
+
+    return [...buyerTransactions, ...sellerTransactions]
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  async updateTransactionStatus(id: number, status: string): Promise<Transaction | undefined> {
+    const [transaction] = await db
+      .update(transactions)
+      .set({ status })
+      .where(eq(transactions.id, id))
+      .returning();
+    return transaction || undefined;
+  }
+
+  async getMarketStats(): Promise<{
+    totalAssets: number;
+    totalVolume: string;
+    activeUsers: number;
+    avgPrice: string;
+  }> {
+    const allAssets = await db.select().from(vrAssets);
+    const completedTransactions = await db
+      .select()
+      .from(transactions)
+      .where(eq(transactions.status, "completed"));
+
+    const allUsers = await db.select().from(users);
+    
+    const totalVolume = completedTransactions
+      .reduce((sum, tx) => sum + parseFloat(tx.price), 0);
+    
+    const avgPrice = allAssets.length > 0 
+      ? allAssets.reduce((sum, asset) => sum + parseFloat(asset.price), 0) / allAssets.length
+      : 0;
+
+    return {
+      totalAssets: allAssets.length,
+      totalVolume: totalVolume.toFixed(2),
+      activeUsers: allUsers.length,
+      avgPrice: avgPrice.toFixed(2),
+    };
+  }
+}
+
+export const storage = new DatabaseStorage();
