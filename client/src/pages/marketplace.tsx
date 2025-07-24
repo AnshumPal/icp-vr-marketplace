@@ -6,6 +6,8 @@ import AssetCard from "@/components/AssetCard";
 import MintAssetModal from "@/components/MintAssetModal";
 import Asset3DPreviewModal from "@/components/Asset3DPreviewModal";
 import TransactionLoadingModal from "@/components/TransactionLoadingModal";
+import { SkyboxScene } from "@/components/SkyboxScene";
+import { SpinningShowcase } from "@/components/SpinningShowcase";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
@@ -26,7 +28,12 @@ export default function Marketplace() {
     queryKey: ["/api/assets"],
   });
 
-  const { data: marketStats } = useQuery({
+  const { data: marketStats } = useQuery<{
+    totalAssets: number;
+    totalVolume: string;
+    activeUsers: number;
+    avgPrice: string;
+  }>({
     queryKey: ["/api/market/stats"],
   });
 
@@ -46,7 +53,7 @@ export default function Marketplace() {
       case "popular":
         return Math.random() - 0.5; // Random for demo
       default:
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
     }
   });
 
@@ -86,33 +93,81 @@ export default function Marketplace() {
         />
         
         <main className="flex-1 p-6">
-          {/* Hero Section */}
+          {/* Hero Section with Skybox */}
           <div className="mb-8">
-            <div className="relative rounded-2xl overflow-hidden glass-morphism p-8 neon-border">
-              <div className="absolute inset-0 bg-gradient-to-r from-dark-primary/90 to-dark-secondary/90"></div>
-              <div className="relative z-10">
-                <h1 className="text-4xl md:text-6xl font-bold mb-4 gradient-text">
-                  Discover VR Worlds
-                </h1>
-                <p className="text-xl text-gray-300 mb-6 max-w-2xl">
-                  Mint, trade, and experience immersive VR assets on the Internet Computer blockchain. 
-                  Join the next generation of decentralized virtual reality.
-                </p>
-                <div className="flex flex-wrap gap-4">
-                  <Button className="bg-gradient-to-r from-neon-cyan to-neon-blue hover:from-neon-blue hover:to-neon-purple px-6 py-3 rounded-lg font-semibold hover:scale-105 transition-transform animate-glow">
-                    Explore Marketplace
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className="border-neon-purple text-neon-purple hover:bg-neon-purple/10"
-                    onClick={() => setShowMintModal(true)}
-                  >
-                    Start Creating
-                  </Button>
+            <div className="relative rounded-2xl overflow-hidden h-96">
+              <div className="absolute inset-0">
+                <SkyboxScene width={1200} height={400} />
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-transparent"></div>
+              <div className="relative z-10 p-8 h-full flex items-center">
+                <div className="max-w-2xl">
+                  <h1 className="text-4xl md:text-6xl font-bold mb-4 gradient-text">
+                    Discover VR Worlds
+                  </h1>
+                  <p className="text-xl text-gray-300 mb-6">
+                    Mint, trade, and experience immersive VR assets on the Internet Computer blockchain. 
+                    Join the next generation of decentralized virtual reality.
+                  </p>
+                  <div className="flex flex-wrap gap-4">
+                    <Button className="bg-gradient-to-r from-neon-cyan to-neon-blue hover:from-neon-blue hover:to-neon-purple px-6 py-3 rounded-lg font-semibold hover:scale-105 transition-transform animate-glow">
+                      Explore Marketplace
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="border-neon-purple text-neon-purple hover:bg-neon-purple/10"
+                      onClick={() => setShowMintModal(true)}
+                    >
+                      Start Creating
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
+
+          {/* Featured Showcase */}
+          {sortedAssets.length > 0 && (
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold mb-6 gradient-text">Featured Asset</h2>
+              <div className="glass-morphism p-6 rounded-xl">
+                <div className="grid md:grid-cols-2 gap-8 items-center">
+                  <div>
+                    <SpinningShowcase 
+                      width={400} 
+                      height={400} 
+                      item={{ title: sortedAssets[0].title }}
+                    />
+                  </div>
+                  <div>
+                    <h3 className="text-3xl font-bold mb-4 text-neon-cyan">{sortedAssets[0].title}</h3>
+                    <p className="text-gray-300 mb-4">{sortedAssets[0].description}</p>
+                    <div className="flex items-center gap-4 mb-6">
+                      <span className="text-2xl font-bold text-neon-purple">{sortedAssets[0].price} ICP</span>
+                      <span className="px-3 py-1 bg-neon-blue/20 text-neon-blue rounded-full text-sm">
+                        {sortedAssets[0].category}
+                      </span>
+                    </div>
+                    <div className="flex gap-4">
+                      <Button 
+                        onClick={() => handlePreview3D(sortedAssets[0])}
+                        variant="outline"
+                        className="border-neon-cyan text-neon-cyan hover:bg-neon-cyan/10"
+                      >
+                        Preview in 3D
+                      </Button>
+                      <Button 
+                        onClick={() => handlePurchase(sortedAssets[0])}
+                        className="bg-gradient-to-r from-neon-cyan to-neon-blue hover:from-neon-blue hover:to-neon-purple"
+                      >
+                        Purchase Now
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Market Stats */}
           {marketStats && (
