@@ -68,4 +68,16 @@ app.use((req, res, next) => {
   }, () => {
     log(`serving on port ${port}`);
   });
-})();
+  })();
+
+  
+//   server.listen(
+//   {
+//     port,
+//     host: '127.0.0.1', // or 'localhost'
+//   },
+//   () => {
+//     log(`serving on port ${port}`);
+//   }
+// );
+

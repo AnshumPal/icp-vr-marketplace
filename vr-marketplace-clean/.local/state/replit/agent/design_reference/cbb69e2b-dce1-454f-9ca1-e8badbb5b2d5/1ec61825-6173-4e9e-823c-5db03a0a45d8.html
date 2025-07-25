@@ -1,0 +1,1009 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VRMarket - Decentralized VR Asset Marketplace</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/heroicons@2.0.18/24/outline/index.js" type="module"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                colors: {
+                    'dark-primary': '#0F0F23',
+                    'dark-secondary': '#1A1B3E',
+                    'neon-cyan': '#00D4FF',
+                    'neon-purple': '#8B5CF6',
+                    'neon-blue': '#3B82F6',
+                },
+                fontFamily: {
+                    'inter': ['Inter', 'sans-serif'],
+                },
+                animation: {
+                    'glow': 'glow 2s ease-in-out infinite alternate',
+                    'float': 'float 3s ease-in-out infinite',
+                    'pulse-neon': 'pulse-neon 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                }
+            }
+        }
+    };
+    </script>
+    <style>
+        @keyframes glow {
+            from { box-shadow: 0 0 5px #00D4FF, 0 0 10px #00D4FF, 0 0 15px #00D4FF; }
+            to { box-shadow: 0 0 10px #00D4FF, 0 0 20px #00D4FF, 0 0 30px #00D4FF; }
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        @keyframes pulse-neon {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .glass-morphism {
+            background: rgba(26, 27, 62, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 212, 255, 0.1);
+        }
+        .neon-border {
+            border: 1px solid #00D4FF;
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+        }
+        .three-canvas {
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(26, 27, 62, 0.8) 0%, rgba(15, 15, 35, 0.9) 100%);
+        }
+    </style>
+</head>
+<body class="bg-dark-primary text-white font-inter">
+    <!-- @COMPONENT: Header [navigation, wallet connection, user profile] -->
+    <header class="glass-morphism border-b border-neon-cyan/20 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-8">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-8 h-8 bg-gradient-to-r from-neon-cyan to-neon-purple rounded-lg flex items-center justify-center">
+                            <span class="font-bold text-sm">VR</span>
+                        </div>
+                        <span class="text-xl font-bold bg-gradient-to-r from-neon-cyan to-neon-purple bg-clip-text text-transparent">VRMarket</span>
+                    </div>
+                    <nav class="hidden md:flex space-x-6">
+                        <a href="#" class="text-white hover:text-neon-cyan transition-colors">Marketplace</a>
+                        <a href="#" class="text-gray-400 hover:text-neon-cyan transition-colors">Create</a>
+                        <a href="#" class="text-gray-400 hover:text-neon-cyan transition-colors">My Assets</a>
+                        <a href="#" class="text-gray-400 hover:text-neon-cyan transition-colors">Analytics</a>
+                    </nav>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="relative">
+                        <input type="text" placeholder="Search VR assets..." 
+                               class="bg-dark-secondary border border-gray-700 rounded-lg px-4 py-2 w-64 focus:border-neon-cyan focus:outline-none transition-colors">
+                        <svg class="w-5 h-5 text-gray-400 absolute right-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </div>
+                    <button class="bg-gradient-to-r from-neon-cyan to-neon-blue hover:from-neon-blue hover:to-neon-purple px-4 py-2 rounded-lg font-medium transition-all duration-300 animate-glow" data-event="click:connectWallet">
+                        Connect Wallet
+                    </button>
+                    <div class="w-8 h-8 bg-neon-purple rounded-full flex items-center justify-center">
+                        <span class="text-sm font-semibold">JD</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+    <!-- @END_COMPONENT: Header -->
+
+    <div class="flex min-h-screen">
+        <!-- @COMPONENT: Sidebar [navigation, stats, quick actions] -->
+        <aside class="w-64 glass-morphism border-r border-neon-cyan/20 p-6 hidden lg:block">
+            <div class="space-y-6">
+                <!-- Stats Overview -->
+                <div class="space-y-4">
+                    <h3 class="text-sm font-medium text-gray-400 uppercase tracking-wider">Portfolio</h3>
+                    <div class="space-y-3">
+                        <div class="p-3 rounded-lg bg-dark-secondary/50 border border-neon-cyan/20">
+                            <div class="text-2xl font-bold text-neon-cyan" data-bind="user.balance">0.245 ICP</div>
+                            <div class="text-sm text-gray-400">Wallet Balance</div>
+                        </div>
+                        <div class="p-3 rounded-lg bg-dark-secondary/50 border border-neon-purple/20">
+                            <div class="text-2xl font-bold text-neon-purple" data-bind="user.assetsOwned">12</div>
+                            <div class="text-sm text-gray-400">Assets Owned</div>
+                        </div>
+                        <div class="p-3 rounded-lg bg-dark-secondary/50 border border-neon-blue/20">
+                            <div class="text-2xl font-bold text-neon-blue" data-bind="user.totalValue">3.4 ICP</div>
+                            <div class="text-sm text-gray-400">Total Value</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="space-y-4">
+                    <h3 class="text-sm font-medium text-gray-400 uppercase tracking-wider">Quick Actions</h3>
+                    <div class="space-y-2">
+                        <button class="w-full text-left p-3 rounded-lg hover:bg-dark-secondary/50 transition-colors flex items-center space-x-3" data-event="click:openMintModal">
+                            <svg class="w-5 h-5 text-neon-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                            </svg>
+                            <span>Mint New Asset</span>
+                        </button>
+                        <button class="w-full text-left p-3 rounded-lg hover:bg-dark-secondary/50 transition-colors flex items-center space-x-3">
+                            <svg class="w-5 h-5 text-neon-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2h4a1 1 0 110 2h-1v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6H3a1 1 0 110-2h4z"></path>
+                            </svg>
+                            <span>Import from Files</span>
+                        </button>
+                        <button class="w-full text-left p-3 rounded-lg hover:bg-dark-secondary/50 transition-colors flex items-center space-x-3">
+                            <svg class="w-5 h-5 text-neon-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            </svg>
+                            <span>View Analytics</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="space-y-4">
+                    <h3 class="text-sm font-medium text-gray-400 uppercase tracking-wider">Recent Activity</h3>
+                    <div class="space-y-3">
+                        <!-- @MAP: recentTransactions.map(tx => ( -->
+                        <div class="p-3 rounded-lg bg-dark-secondary/30 border border-gray-700/30" data-mock="true">
+                            <div class="flex items-center justify-between">
+                                <div class="text-sm font-medium">VR Office Space</div>
+                                <div class="text-xs text-neon-green">+0.5 ICP</div>
+                            </div>
+                            <div class="text-xs text-gray-400 mt-1">Sold 2 hours ago</div>
+                        </div>
+                        <div class="p-3 rounded-lg bg-dark-secondary/30 border border-gray-700/30" data-mock="true">
+                            <div class="flex items-center justify-between">
+                                <div class="text-sm font-medium">Cyberpunk City</div>
+                                <div class="text-xs text-neon-cyan">Minted</div>
+                            </div>
+                            <div class="text-xs text-gray-400 mt-1">Created 1 day ago</div>
+                        </div>
+                        <!-- @END_MAP )) -->
+                    </div>
+                </div>
+            </div>
+        </aside>
+        <!-- @END_COMPONENT: Sidebar -->
+
+        <!-- @COMPONENT: MainContent [marketplace gallery, asset grid, filters] -->
+        <main class="flex-1 p-6">
+            <!-- Hero Section -->
+            <div class="mb-8">
+                <div class="relative rounded-2xl overflow-hidden glass-morphism p-8 neon-border">
+                    <!-- A futuristic VR landscape with neon lights and digital architecture -->
+                    <div class="absolute inset-0 bg-gradient-to-r from-dark-primary/90 to-dark-secondary/90"></div>
+                    <div class="relative z-10">
+                        <h1 class="text-4xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-neon-cyan via-neon-purple to-neon-blue bg-clip-text text-transparent">
+                            Discover VR Worlds
+                        </h1>
+                        <p class="text-xl text-gray-300 mb-6 max-w-2xl">
+                            Mint, trade, and experience immersive VR assets on the Internet Computer blockchain. 
+                            Join the next generation of decentralized virtual reality.
+                        </p>
+                        <div class="flex flex-wrap gap-4">
+                            <button class="bg-gradient-to-r from-neon-cyan to-neon-blue px-6 py-3 rounded-lg font-semibold hover:scale-105 transition-transform animate-glow" data-event="click:exploremarketplace">
+                                Explore Marketplace
+                            </button>
+                            <button class="border border-neon-purple text-neon-purple px-6 py-3 rounded-lg font-semibold hover:bg-neon-purple/10 transition-colors" data-event="click:openMintModal">
+                                Start Creating
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Market Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="glass-morphism p-6 rounded-xl">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="text-2xl font-bold text-neon-cyan" data-bind="marketStats.totalAssets">1,247</div>
+                            <div class="text-sm text-gray-400">Total Assets</div>
+                        </div>
+                        <div class="w-12 h-12 bg-neon-cyan/20 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-neon-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="glass-morphism p-6 rounded-xl">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="text-2xl font-bold text-neon-purple" data-bind="marketStats.totalVolume">45.2 ICP</div>
+                            <div class="text-sm text-gray-400">Total Volume</div>
+                        </div>
+                        <div class="w-12 h-12 bg-neon-purple/20 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-neon-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="glass-morphism p-6 rounded-xl">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="text-2xl font-bold text-neon-blue" data-bind="marketStats.activeUsers">892</div>
+                            <div class="text-sm text-gray-400">Active Users</div>
+                        </div>
+                        <div class="w-12 h-12 bg-neon-blue/20 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-neon-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="glass-morphism p-6 rounded-xl">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="text-2xl font-bold text-green-400" data-bind="marketStats.avgPrice">0.34 ICP</div>
+                            <div class="text-sm text-gray-400">Average Price</div>
+                        </div>
+                        <div class="w-12 h-12 bg-green-400/20 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters and Sort -->
+            <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
+                <div class="flex flex-wrap gap-4">
+                    <select class="bg-dark-secondary border border-gray-700 rounded-lg px-4 py-2 focus:border-neon-cyan focus:outline-none transition-colors">
+                        <option>All Categories</option>
+                        <option>Gaming Worlds</option>
+                        <option>Educational</option>
+                        <option>Art Galleries</option>
+                        <option>Social Spaces</option>
+                    </select>
+                    <select class="bg-dark-secondary border border-gray-700 rounded-lg px-4 py-2 focus:border-neon-cyan focus:outline-none transition-colors">
+                        <option>Price: Low to High</option>
+                        <option>Price: High to Low</option>
+                        <option>Recently Added</option>
+                        <option>Most Popular</option>
+                    </select>
+                    <div class="flex items-center space-x-2 bg-dark-secondary rounded-lg p-2">
+                        <label class="text-sm text-gray-400">Price Range:</label>
+                        <input type="range" min="0" max="10" step="0.1" class="w-32" />
+                        <span class="text-sm text-neon-cyan">0-10 ICP</span>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button class="p-2 bg-dark-secondary rounded-lg border border-gray-700 hover:border-neon-cyan transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+                        </svg>
+                    </button>
+                    <button class="p-2 bg-dark-secondary rounded-lg border border-gray-700 hover:border-neon-cyan transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Asset Gallery -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
+                <!-- @MAP: assets.map(asset => ( -->
+                <!-- VR Gaming Environment with neon-lit cyberpunk aesthetics -->
+                <div class="glass-morphism rounded-xl overflow-hidden hover:scale-105 transition-all duration-300 neon-border animate-float" data-mock="true">
+                    <div class="relative">
+                        <img src="https://images.unsplash.com/photo-1622979135225-d2ba269cf1ac?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=600&h=400" 
+                             alt="Cyberpunk VR Gaming World" 
+                             class="w-full h-48 object-cover"/>
+                        <div class="absolute top-4 right-4">
+                            <span class="bg-neon-purple/80 text-white text-xs px-2 py-1 rounded-full">Gaming</span>
+                        </div>
+                        <div class="absolute bottom-4 left-4">
+                            <button class="bg-black/50 backdrop-blur-sm p-2 rounded-full hover:bg-neon-cyan/20 transition-colors" data-event="click:preview3D">
+                                <svg class="w-5 h-5 text-neon-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <h3 class="font-semibold text-lg mb-2" data-bind="asset.title">Neon Cyberpunk Arena</h3>
+                        <p class="text-sm text-gray-400 mb-3" data-bind="asset.description">High-tech gaming environment with interactive elements</p>
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-6 h-6 bg-neon-blue rounded-full"></div>
+                                <span class="text-sm text-gray-400" data-bind="asset.owner">@cyberpunk_dev</span>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-neon-cyan font-semibold" data-bind="asset.price">2.5 ICP</div>
+                                <div class="text-xs text-gray-400">$89.50</div>
+                            </div>
+                        </div>
+                        <button class="w-full bg-gradient-to-r from-neon-cyan to-neon-blue hover:from-neon-blue hover:to-neon-purple px-4 py-2 rounded-lg font-medium transition-all duration-300" data-event="click:purchaseAsset">
+                            Purchase Asset
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Futuristic office space with holographic displays -->
+                <div class="glass-morphism rounded-xl overflow-hidden hover:scale-105 transition-all duration-300 neon-border animate-float" data-mock="true" style="animation-delay: 0.5s;">
+                    <div class="relative">
+                        <img src="https://pixabay.com/get/gd54c3d72454c67f15caf05c457b7f709d6eca5bc3d4c00b4d3d115b4dfe8ddff8352ee6d2b8c6e55dbcc5edea5d62c6c8087541a20d37a566bf7b4edea195f0f_1280.jpg" 
+                             alt="Futuristic VR Office Space" 
+                             class="w-full h-48 object-cover"/>
+                        <div class="absolute top-4 right-4">
+                            <span class="bg-neon-blue/80 text-white text-xs px-2 py-1 rounded-full">Workspace</span>
+                        </div>
+                        <div class="absolute bottom-4 left-4">
+                            <button class="bg-black/50 backdrop-blur-sm p-2 rounded-full hover:bg-neon-cyan/20 transition-colors" data-event="click:preview3D">
+                                <svg class="w-5 h-5 text-neon-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <h3 class="font-semibold text-lg mb-2" data-bind="asset.title">Virtual Office Hub</h3>
+                        <p class="text-sm text-gray-400 mb-3" data-bind="asset.description">Modern workplace with collaborative tools</p>
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-6 h-6 bg-neon-purple rounded-full"></div>
+                                <span class="text-sm text-gray-400" data-bind="asset.owner">@workspace_pro</span>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-neon-cyan font-semibold" data-bind="asset.price">1.8 ICP</div>
+                                <div class="text-xs text-gray-400">$64.80</div>
+                            </div>
+                        </div>
+                        <button class="w-full bg-gradient-to-r from-neon-cyan to-neon-blue hover:from-neon-blue hover:to-neon-purple px-4 py-2 rounded-lg font-medium transition-all duration-300" data-event="click:purchaseAsset">
+                            Purchase Asset
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Abstract digital art gallery with floating sculptures -->
+                <div class="glass-morphism rounded-xl overflow-hidden hover:scale-105 transition-all duration-300 neon-border animate-float" data-mock="true" style="animation-delay: 1s;">
+                    <div class="relative">
+                        <img src="https://images.unsplash.com/photo-1635070041078-e363dbe005cb?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=600&h=400" 
+                             alt="VR Art Gallery Space" 
+                             class="w-full h-48 object-cover"/>
+                        <div class="absolute top-4 right-4">
+                            <span class="bg-gradient-to-r from-neon-purple to-neon-cyan text-white text-xs px-2 py-1 rounded-full">Art</span>
+                        </div>
+                        <div class="absolute bottom-4 left-4">
+                            <button class="bg-black/50 backdrop-blur-sm p-2 rounded-full hover:bg-neon-cyan/20 transition-colors" data-event="click:preview3D">
+                                <svg class="w-5 h-5 text-neon-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <h3 class="font-semibold text-lg mb-2" data-bind="asset.title">Digital Art Gallery</h3>
+                        <p class="text-sm text-gray-400 mb-3" data-bind="asset.description">Immersive gallery showcasing digital masterpieces</p>
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-6 h-6 bg-gradient-to-r from-neon-purple to-neon-cyan rounded-full"></div>
+                                <span class="text-sm text-gray-400" data-bind="asset.owner">@artsmith_vr</span>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-neon-cyan font-semibold" data-bind="asset.price">3.2 ICP</div>
+                                <div class="text-xs text-gray-400">$115.20</div>
+                            </div>
+                        </div>
+                        <button class="w-full bg-gradient-to-r from-neon-cyan to-neon-blue hover:from-neon-blue hover:to-neon-purple px-4 py-2 rounded-lg font-medium transition-all duration-300" data-event="click:purchaseAsset">
+                            Purchase Asset
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tropical island paradise VR environment -->
+                <div class="glass-morphism rounded-xl overflow-hidden hover:scale-105 transition-all duration-300 neon-border animate-float" data-mock="true" style="animation-delay: 1.5s;">
+                    <div class="relative">
+                        <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=600&h=400" 
+                             alt="VR Tropical Paradise" 
+                             class="w-full h-48 object-cover"/>
+                        <div class="absolute top-4 right-4">
+                            <span class="bg-green-500/80 text-white text-xs px-2 py-1 rounded-full">Nature</span>
+                        </div>
+                        <div class="absolute bottom-4 left-4">
+                            <button class="bg-black/50 backdrop-blur-sm p-2 rounded-full hover:bg-neon-cyan/20 transition-colors" data-event="click:preview3D">
+                                <svg class="w-5 h-5 text-neon-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <h3 class="font-semibold text-lg mb-2" data-bind="asset.title">Paradise Island</h3>
+                        <p class="text-sm text-gray-400 mb-3" data-bind="asset.description">Peaceful tropical getaway with crystal clear waters</p>
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-6 h-6 bg-green-500 rounded-full"></div>
+                                <span class="text-sm text-gray-400" data-bind="asset.owner">@nature_vr</span>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-neon-cyan font-semibold" data-bind="asset.price">1.5 ICP</div>
+                                <div class="text-xs text-gray-400">$54.00</div>
+                            </div>
+                        </div>
+                        <button class="w-full bg-gradient-to-r from-neon-cyan to-neon-blue hover:from-neon-blue hover:to-neon-purple px-4 py-2 rounded-lg font-medium transition-all duration-300" data-event="click:purchaseAsset">
+                            Purchase Asset
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Space station interior with futuristic controls -->
+                <div class="glass-morphism rounded-xl overflow-hidden hover:scale-105 transition-all duration-300 neon-border animate-float" data-mock="true" style="animation-delay: 2s;">
+                    <div class="relative">
+                        <img src="https://images.unsplash.com/photo-1446776653964-20c1d3a81b06?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=600&h=400" 
+                             alt="VR Space Station Interior" 
+                             class="w-full h-48 object-cover"/>
+                        <div class="absolute top-4 right-4">
+                            <span class="bg-indigo-500/80 text-white text-xs px-2 py-1 rounded-full">Sci-Fi</span>
+                        </div>
+                        <div class="absolute bottom-4 left-4">
+                            <button class="bg-black/50 backdrop-blur-sm p-2 rounded-full hover:bg-neon-cyan/20 transition-colors" data-event="click:preview3D">
+                                <svg class="w-5 h-5 text-neon-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <h3 class="font-semibold text-lg mb-2" data-bind="asset.title">Space Station Alpha</h3>
+                        <p class="text-sm text-gray-400 mb-3" data-bind="asset.description">Advanced orbital facility with interactive systems</p>
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-6 h-6 bg-indigo-500 rounded-full"></div>
+                                <span class="text-sm text-gray-400" data-bind="asset.owner">@space_explorer</span>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-neon-cyan font-semibold" data-bind="asset.price">4.1 ICP</div>
+                                <div class="text-xs text-gray-400">$147.60</div>
+                            </div>
+                        </div>
+                        <button class="w-full bg-gradient-to-r from-neon-cyan to-neon-blue hover:from-neon-blue hover:to-neon-purple px-4 py-2 rounded-lg font-medium transition-all duration-300" data-event="click:purchaseAsset">
+                            Purchase Asset
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Medieval castle with VR gaming elements -->
+                <div class="glass-morphism rounded-xl overflow-hidden hover:scale-105 transition-all duration-300 neon-border animate-float" data-mock="true" style="animation-delay: 2.5s;">
+                    <div class="relative">
+                        <img src="https://images.unsplash.com/photo-1518709594023-6eab9bab7b23?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=600&h=400" 
+                             alt="VR Medieval Castle Environment" 
+                             class="w-full h-48 object-cover"/>
+                        <div class="absolute top-4 right-4">
+                            <span class="bg-amber-600/80 text-white text-xs px-2 py-1 rounded-full">Fantasy</span>
+                        </div>
+                        <div class="absolute bottom-4 left-4">
+                            <button class="bg-black/50 backdrop-blur-sm p-2 rounded-full hover:bg-neon-cyan/20 transition-colors" data-event="click:preview3D">
+                                <svg class="w-5 h-5 text-neon-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <h3 class="font-semibold text-lg mb-2" data-bind="asset.title">Dragon's Keep Castle</h3>
+                        <p class="text-sm text-gray-400 mb-3" data-bind="asset.description">Immersive medieval fortress with quest elements</p>
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-6 h-6 bg-amber-600 rounded-full"></div>
+                                <span class="text-sm text-gray-400" data-bind="asset.owner">@fantasy_realm</span>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-neon-cyan font-semibold" data-bind="asset.price">2.8 ICP</div>
+                                <div class="text-xs text-gray-400">$100.80</div>
+                            </div>
+                        </div>
+                        <button class="w-full bg-gradient-to-r from-neon-cyan to-neon-blue hover:from-neon-blue hover:to-neon-purple px-4 py-2 rounded-lg font-medium transition-all duration-300" data-event="click:purchaseAsset">
+                            Purchase Asset
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Urban rooftop VR social space -->
+                <div class="glass-morphism rounded-xl overflow-hidden hover:scale-105 transition-all duration-300 neon-border animate-float" data-mock="true" style="animation-delay: 3s;">
+                    <div class="relative">
+                        <img src="https://images.unsplash.com/photo-1449824913935-59a10b8d2000?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=600&h=400" 
+                             alt="VR Urban Rooftop Social Space" 
+                             class="w-full h-48 object-cover"/>
+                        <div class="absolute top-4 right-4">
+                            <span class="bg-pink-500/80 text-white text-xs px-2 py-1 rounded-full">Social</span>
+                        </div>
+                        <div class="absolute bottom-4 left-4">
+                            <button class="bg-black/50 backdrop-blur-sm p-2 rounded-full hover:bg-neon-cyan/20 transition-colors" data-event="click:preview3D">
+                                <svg class="w-5 h-5 text-neon-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <h3 class="font-semibold text-lg mb-2" data-bind="asset.title">City Skyline Lounge</h3>
+                        <p class="text-sm text-gray-400 mb-3" data-bind="asset.description">Premium social space with stunning city views</p>
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-6 h-6 bg-pink-500 rounded-full"></div>
+                                <span class="text-sm text-gray-400" data-bind="asset.owner">@social_architect</span>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-neon-cyan font-semibold" data-bind="asset.price">1.9 ICP</div>
+                                <div class="text-xs text-gray-400">$68.40</div>
+                            </div>
+                        </div>
+                        <button class="w-full bg-gradient-to-r from-neon-cyan to-neon-blue hover:from-neon-blue hover:to-neon-purple px-4 py-2 rounded-lg font-medium transition-all duration-300" data-event="click:purchaseAsset">
+                            Purchase Asset
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Underwater coral reef VR experience -->
+                <div class="glass-morphism rounded-xl overflow-hidden hover:scale-105 transition-all duration-300 neon-border animate-float" data-mock="true" style="animation-delay: 3.5s;">
+                    <div class="relative">
+                        <img src="https://images.unsplash.com/photo-1583212292454-1fe6229603b7?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=600&h=400" 
+                             alt="VR Underwater Coral Reef Experience" 
+                             class="w-full h-48 object-cover"/>
+                        <div class="absolute top-4 right-4">
+                            <span class="bg-teal-500/80 text-white text-xs px-2 py-1 rounded-full">Educational</span>
+                        </div>
+                        <div class="absolute bottom-4 left-4">
+                            <button class="bg-black/50 backdrop-blur-sm p-2 rounded-full hover:bg-neon-cyan/20 transition-colors" data-event="click:preview3D">
+                                <svg class="w-5 h-5 text-neon-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <h3 class="font-semibold text-lg mb-2" data-bind="asset.title">Ocean Depths Explorer</h3>
+                        <p class="text-sm text-gray-400 mb-3" data-bind="asset.description">Interactive marine biology learning experience</p>
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-6 h-6 bg-teal-500 rounded-full"></div>
+                                <span class="text-sm text-gray-400" data-bind="asset.owner">@ocean_edu</span>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-neon-cyan font-semibold" data-bind="asset.price">0.9 ICP</div>
+                                <div class="text-xs text-gray-400">$32.40</div>
+                            </div>
+                        </div>
+                        <button class="w-full bg-gradient-to-r from-neon-cyan to-neon-blue hover:from-neon-blue hover:to-neon-purple px-4 py-2 rounded-lg font-medium transition-all duration-300" data-event="click:purchaseAsset">
+                            Purchase Asset
+                        </button>
+                    </div>
+                </div>
+                <!-- @END_MAP )) -->
+            </div>
+
+            <!-- Load More Button -->
+            <div class="text-center">
+                <button class="bg-dark-secondary border border-neon-cyan hover:bg-neon-cyan/10 px-8 py-3 rounded-lg font-medium transition-all duration-300" data-event="click:loadMoreAssets">
+                    Load More Assets
+                </button>
+            </div>
+        </main>
+        <!-- @END_COMPONENT: MainContent -->
+    </div>
+
+    <!-- @COMPONENT: MintAssetModal [form for creating new VR assets] -->
+    <div id="mintModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="glass-morphism rounded-2xl p-8 w-full max-w-2xl neon-border">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold bg-gradient-to-r from-neon-cyan to-neon-purple bg-clip-text text-transparent">
+                        Mint New VR Asset
+                    </h2>
+                    <button class="text-gray-400 hover:text-white" data-event="click:closeMintModal">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <form class="space-y-6" data-event="submit:mintAsset">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Asset Title</label>
+                            <input type="text" 
+                                   class="w-full bg-dark-secondary border border-gray-700 rounded-lg px-4 py-3 focus:border-neon-cyan focus:outline-none transition-colors" 
+                                   placeholder="Enter asset title..." 
+                                   data-bind="mintForm.title"
+                                   required />
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Description</label>
+                            <textarea class="w-full bg-dark-secondary border border-gray-700 rounded-lg px-4 py-3 h-24 focus:border-neon-cyan focus:outline-none transition-colors" 
+                                      placeholder="Describe your VR asset..." 
+                                      data-bind="mintForm.description"
+                                      required></textarea>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Category</label>
+                            <select class="w-full bg-dark-secondary border border-gray-700 rounded-lg px-4 py-3 focus:border-neon-cyan focus:outline-none transition-colors" 
+                                    data-bind="mintForm.category"
+                                    required>
+                                <option value="">Select category...</option>
+                                <option value="gaming">Gaming</option>
+                                <option value="educational">Educational</option>
+                                <option value="art">Art Gallery</option>
+                                <option value="social">Social Space</option>
+                                <option value="workspace">Workspace</option>
+                                <option value="nature">Nature</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Price (ICP)</label>
+                            <input type="number" 
+                                   step="0.01" 
+                                   min="0" 
+                                   class="w-full bg-dark-secondary border border-gray-700 rounded-lg px-4 py-3 focus:border-neon-cyan focus:outline-none transition-colors" 
+                                   placeholder="0.00" 
+                                   data-bind="mintForm.price"
+                                   required />
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Preview URL</label>
+                            <input type="url" 
+                                   class="w-full bg-dark-secondary border border-gray-700 rounded-lg px-4 py-3 focus:border-neon-cyan focus:outline-none transition-colors" 
+                                   placeholder="https://example.com/preview.jpg" 
+                                   data-bind="mintForm.previewUrl"
+                                   required />
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-300 mb-2">3D Asset File</label>
+                            <div class="border-2 border-dashed border-gray-700 rounded-lg p-8 text-center hover:border-neon-cyan transition-colors">
+                                <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                                </svg>
+                                <p class="text-gray-400 mb-2">Drag and drop your 3D asset file here, or</p>
+                                <button type="button" class="text-neon-cyan hover:text-neon-blue underline" data-event="click:openFileDialog">browse files</button>
+                                <p class="text-xs text-gray-500 mt-2">Supports .glb, .gltf, .fbx files (max 50MB)</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3D Preview Container -->
+                    <div class="mt-6">
+                        <label class="block text-sm font-medium text-gray-300 mb-2">3D Preview</label>
+                        <div class="bg-dark-secondary rounded-lg h-64 flex items-center justify-center three-canvas" id="3dPreviewContainer">
+                            <div class="text-center text-gray-400">
+                                <svg class="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                                </svg>
+                                <p>3D preview will appear here</p>
+                                <p class="text-sm mt-1">Upload a 3D asset to see preview</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Transaction Preview -->
+                    <div class="bg-dark-secondary/50 rounded-lg p-4 border border-neon-cyan/20">
+                        <h4 class="font-medium text-neon-cyan mb-3">Transaction Preview</h4>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Minting Fee:</span>
+                                <span data-bind="transaction.mintingFee">0.001 ICP</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Platform Fee:</span>
+                                <span data-bind="transaction.platformFee">0.002 ICP</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Gas Fee:</span>
+                                <span data-bind="transaction.gasFee">0.0005 ICP</span>
+                            </div>
+                            <hr class="border-gray-700">
+                            <div class="flex justify-between font-semibold">
+                                <span>Total Cost:</span>
+                                <span class="text-neon-cyan" data-bind="transaction.totalCost">0.0035 ICP</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex space-x-4 pt-4">
+                        <button type="button" 
+                                class="flex-1 bg-gray-700 hover:bg-gray-600 px-6 py-3 rounded-lg font-medium transition-colors" 
+                                data-event="click:closeMintModal">
+                            Cancel
+                        </button>
+                        <button type="submit" 
+                                class="flex-1 bg-gradient-to-r from-neon-cyan to-neon-blue hover:from-neon-blue hover:to-neon-purple px-6 py-3 rounded-lg font-medium transition-all duration-300 animate-glow" 
+                                data-event="submit:mintAsset">
+                            <!-- @FUNCTIONALITY: Should validate form, process blockchain transaction, and mint NFT -->
+                            Mint Asset
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: MintAssetModal -->
+
+    <!-- @COMPONENT: Asset3DPreviewModal [detailed 3D asset viewer] -->
+    <div id="asset3DModal" class="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 hidden">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="glass-morphism rounded-2xl w-full max-w-6xl h-[80vh] neon-border">
+                <div class="flex items-center justify-between p-6 border-b border-neon-cyan/20">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white" data-bind="selectedAsset.title">Asset Preview</h2>
+                        <p class="text-gray-400" data-bind="selectedAsset.description">Interactive 3D preview</p>
+                    </div>
+                    <button class="text-gray-400 hover:text-white" data-event="click:close3DModal">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="p-6 h-full">
+                    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full">
+                        <div class="lg:col-span-3">
+                            <div class="bg-dark-secondary rounded-xl h-full three-canvas" id="main3DViewer">
+                                <!-- @FUNCTIONALITY: This should implement 3D asset viewer using Three.js with orbit controls -->
+                                <div class="flex items-center justify-center h-full text-gray-400">
+                                    <div class="text-center">
+                                        <div class="animate-spin w-16 h-16 border-4 border-neon-cyan/20 border-t-neon-cyan rounded-full mx-auto mb-4"></div>
+                                        <p>Loading 3D Asset...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="space-y-6">
+                            <div class="glass-morphism p-4 rounded-xl">
+                                <h3 class="font-semibold mb-3 text-neon-cyan">Asset Details</h3>
+                                <div class="space-y-3 text-sm">
+                                    <div>
+                                        <span class="text-gray-400">Owner:</span>
+                                        <div class="flex items-center space-x-2 mt-1">
+                                            <div class="w-6 h-6 bg-neon-purple rounded-full"></div>
+                                            <span data-bind="selectedAsset.owner">@creator_name</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-400">Price:</span>
+                                        <div class="text-neon-cyan font-semibold mt-1" data-bind="selectedAsset.price">2.5 ICP</div>
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-400">Category:</span>
+                                        <div class="mt-1" data-bind="selectedAsset.category">Gaming</div>
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-400">File Size:</span>
+                                        <div class="mt-1" data-bind="selectedAsset.fileSize">12.4 MB</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="glass-morphism p-4 rounded-xl">
+                                <h3 class="font-semibold mb-3 text-neon-cyan">Controls</h3>
+                                <div class="space-y-2 text-sm">
+                                    <div class="flex items-center space-x-2">
+                                        <kbd class="bg-dark-secondary px-2 py-1 rounded text-xs">Mouse</kbd>
+                                        <span class="text-gray-400">Rotate view</span>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <kbd class="bg-dark-secondary px-2 py-1 rounded text-xs">Wheel</kbd>
+                                        <span class="text-gray-400">Zoom in/out</span>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <kbd class="bg-dark-secondary px-2 py-1 rounded text-xs">R</kbd>
+                                        <span class="text-gray-400">Reset view</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="space-y-3">
+                                <button class="w-full bg-gradient-to-r from-neon-cyan to-neon-blue hover:from-neon-blue hover:to-neon-purple px-4 py-3 rounded-lg font-medium transition-all duration-300" data-event="click:purchaseFromPreview">
+                                    Purchase Asset
+                                </button>
+                                <button class="w-full border border-neon-purple text-neon-purple hover:bg-neon-purple/10 px-4 py-3 rounded-lg font-medium transition-colors" data-event="click:addToWishlist">
+                                    Add to Wishlist
+                                </button>
+                                <button class="w-full bg-dark-secondary hover:bg-gray-700 px-4 py-3 rounded-lg font-medium transition-colors" data-event="click:shareAsset">
+                                    Share Asset
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: Asset3DPreviewModal -->
+
+    <!-- @COMPONENT: TransactionLoadingModal [blockchain transaction progress] -->
+    <div id="transactionModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="glass-morphism rounded-2xl p-8 w-full max-w-md neon-border">
+                <div class="text-center">
+                    <div class="w-16 h-16 border-4 border-neon-cyan/20 border-t-neon-cyan rounded-full animate-spin mx-auto mb-6"></div>
+                    <h3 class="text-xl font-bold mb-2 text-neon-cyan" data-bind="transaction.status">Processing Transaction</h3>
+                    <p class="text-gray-400 mb-6" data-bind="transaction.message">Confirming on Internet Computer blockchain...</p>
+                    
+                    <div class="space-y-4">
+                        <div class="bg-dark-secondary rounded-lg p-4">
+                            <div class="flex justify-between text-sm mb-2">
+                                <span class="text-gray-400">Transaction Hash:</span>
+                            </div>
+                            <div class="font-mono text-xs bg-dark-primary p-2 rounded border" data-bind="transaction.hash">
+                                0x1a2b3c4d5e6f7g8h9i0j...
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <div class="flex items-center space-x-3 text-sm">
+                                <div class="w-4 h-4 bg-green-500 rounded-full animate-pulse"></div>
+                                <span>Transaction submitted</span>
+                            </div>
+                            <div class="flex items-center space-x-3 text-sm">
+                                <div class="w-4 h-4 bg-neon-cyan rounded-full animate-pulse-neon"></div>
+                                <span>Awaiting confirmation...</span>
+                            </div>
+                            <div class="flex items-center space-x-3 text-sm text-gray-500">
+                                <div class="w-4 h-4 bg-gray-600 rounded-full"></div>
+                                <span>Asset minted</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: TransactionLoadingModal -->
+
+    <script>
+    // TODO: Implement business logic, API calls, and state management
+    
+    (function() {
+        // Modal Management
+        const modals = {
+            mint: document.getElementById('mintModal'),
+            asset3D: document.getElementById('asset3DModal'),
+            transaction: document.getElementById('transactionModal')
+        };
+
+        function showModal(modalName) {
+            if (modals[modalName]) {
+                modals[modalName].classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function hideModal(modalName) {
+            if (modals[modalName]) {
+                modals[modalName].classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        // Event Listeners
+        document.addEventListener('click', function(e) {
+            const target = e.target.closest('[data-event]');
+            if (!target) return;
+
+            const [event, handler] = target.dataset.event.split(':');
+            
+            switch (handler) {
+                case 'openMintModal':
+                    showModal('mint');
+                    break;
+                case 'closeMintModal':
+                    hideModal('mint');
+                    break;
+                case 'preview3D':
+                    showModal('asset3D');
+                    // TODO: Load actual 3D asset data
+                    break;
+                case 'close3DModal':
+                    hideModal('asset3D');
+                    break;
+                case 'connectWallet':
+                    simulateWalletConnection();
+                    break;
+                case 'purchaseAsset':
+                case 'purchaseFromPreview':
+                    simulateTransaction('purchase');
+                    break;
+                default:
+                    console.log(`Handler "${handler}" not implemented`);
+            }
+        });
+
+        // Form Submission
+        document.addEventListener('submit', function(e) {
+            const target = e.target.closest('[data-event]');
+            if (!target) return;
+
+            e.preventDefault();
+            const [event, handler] = target.dataset.event.split(':');
+            
+            if (handler === 'mintAsset') {
+                simulateTransaction('mint');
+                hideModal('mint');
+            }
+        });
+
+        // Simulation Functions
+        function simulateWalletConnection() {
+            const button = document.querySelector('[data-event="click:connectWallet"]');
+            button.textContent = 'Connecting...';
+            
+            setTimeout(() => {
+                button.textContent = 'Connected';
+                button.classList.remove('animate-glow');
+                button.classList.add('bg-green-600', 'hover:bg-green-700');
+            }, 2000);
+        }
+
+        function simulateTransaction(type) {
+            showModal('transaction');
+            
+            const statusElement = document.querySelector('[data-bind="transaction.status"]');
+            const messageElement = document.querySelector('[data-bind="transaction.message"]');
+            
+            // Simulate transaction phases
+            setTimeout(() => {
+                statusElement.textContent = 'Confirming Transaction';
+                messageElement.textContent = 'Waiting for blockchain confirmation...';
+            }, 2000);
+            
+            setTimeout(() => {
+                statusElement.textContent = 'Transaction Complete';
+                messageElement.textContent = type === 'mint' ? 'Asset successfully minted!' : 'Purchase successful!';
+                
+                setTimeout(() => {
+                    hideModal('transaction');
+                }, 2000);
+            }, 4000);
+        }
+
+        // Close modals on outside click
+        Object.values(modals).forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    const modalName = Object.keys(modals).find(name => modals[name] === modal);
+                    hideModal(modalName);
+                }
+            });
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                Object.keys(modals).forEach(hideModal);
+            }
+        });
+
+        // Initialize 3D preview placeholder (would use Three.js in production)
+        function init3DPreview() {
+            // TODO: Initialize Three.js scene, camera, renderer
+            console.log('3D preview would be initialized here with Three.js');
+        }
+
+        // Search functionality
+        const searchInput = document.querySelector('input[placeholder="Search VR assets..."]');
+        if (searchInput) {
+            searchInput.addEventListener('input', function(e) {
+                // TODO: Implement search filtering
+                console.log('Searching for:', e.target.value);
+            });
+        }
+
+        // Initialize app
+        init3DPreview();
+    })();
+    </script>
+</body>
+</html>
