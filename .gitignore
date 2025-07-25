@@ -1,6 +1,32 @@
+<<<<<<< HEAD
 node_modules
 dist
 .DS_Store
 server/public
 vite.config.ts.*
 *.tar.gz
+=======
+# Node.js
+node_modules/
+npm-debug.log
+
+# ICP SDK
+.dfx/
+.cache/
+canister_ids.json
+
+# Rust
+target/
+Cargo.lock
+
+# Frontend
+frontend/build/
+*.env
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/
+>>>>>>> 6adfb570615478330984e0b9bc183e25c8c0a383
