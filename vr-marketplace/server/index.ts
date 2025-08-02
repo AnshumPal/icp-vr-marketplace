@@ -61,23 +61,25 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
+
+  // Here is the updated server listen call
+  // Remove `reusePort: true` and `host: "0.0.0.0"` as they are causing the error.
+  // We will listen on the port only, which is a standard and compatible way to do it.
+  server.listen(port, () => {
     log(`serving on port ${port}`);
   });
-  })();
 
-  
-//   server.listen(
-//   {
-//     port,
-//     host: '127.0.0.1', // or 'localhost'
-//   },
-//   () => {
-//     log(`serving on port ${port}`);
-//   }
-// );
+  // If you need to specify a host, use '127.0.0.1' or 'localhost' which are
+  // generally more compatible in restricted environments. The commented-out code below
+  // shows how to do that, but the simpler approach above should work.
+  // server.listen(
+  //   {
+  //     port,
+  //     host: '127.0.0.1', // or 'localhost'
+  //   },
+  //   () => {
+  //     log(`serving on port ${port}`);
+  //   }
+  // );
 
+})();
