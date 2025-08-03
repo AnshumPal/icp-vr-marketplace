@@ -225,6 +225,9 @@ export default function Marketplace() {
                   <SelectItem value="social">Social Spaces</SelectItem>
                   <SelectItem value="workspace">Workspace</SelectItem>
                   <SelectItem value="nature">Nature</SelectItem>
+                   <SelectItem value="science">Science</SelectItem>
+                    <SelectItem value="utility">Utility</SelectItem>
+                    <SelectItem value="wellness">Wellness</SelectItem>  
                 </SelectContent>
               </Select>
               
@@ -271,7 +274,7 @@ export default function Marketplace() {
             </div>
           </div>
 
-          {/* Asset Gallery */}
+          
           <div className={viewMode === "grid" 
             ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8"
             : "space-y-4 mb-8"

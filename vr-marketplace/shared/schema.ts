@@ -1,7 +1,10 @@
-import { pgTable, text, serial, integer, boolean, timestamp, decimal } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, decimal,varchar} from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { sql } from "drizzle-orm";
+
+
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -32,9 +35,26 @@ export const transactions = pgTable("transactions", {
   buyerId: integer("buyer_id").references(() => users.id).notNull(),
   sellerId: integer("seller_id").references(() => users.id).notNull(),
   price: decimal("price", { precision: 18, scale: 8 }).notNull(),
-  transactionHash: text("transaction_hash"),
+  transactionHash: text("transaction_hash") ?? null,
   status: text("status").notNull().default("pending"),
   createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const creators = pgTable("creators", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  username: text("username").notNull().unique(),
+  isVerified: boolean("is_verified").default(false),
+  avatarUrl: text("avatar_url"),
+  bio: text("bio"),
+});
+
+export const categories = pgTable("categories", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull().unique(),
+  slug: text("slug").notNull().unique(),
+  icon: text("icon").notNull(),
+  description: text("description"),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -62,6 +82,38 @@ export const insertTransactionSchema = createInsertSchema(transactions).pick({
   status: true,
 });
 
+export const products = pgTable("products", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  category: text("category").notNull(),
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  imageUrl: text("image_url").notNull(),
+  rating: decimal("rating", { precision: 3, scale: 2 }).default("0"),
+  downloads: integer("downloads").default(0),
+  fileSize: text("file_size"),
+  compatibility: text("compatibility"),
+  creatorId: varchar("creator_id").notNull(),
+  isBlockchainVerified: boolean("is_blockchain_verified").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+
+export const insertProductSchema = createInsertSchema(products).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertCreatorSchema = createInsertSchema(creators).omit({
+  id: true,
+});
+
+export const insertCategorySchema = createInsertSchema(categories).omit({
+  id: true,
+});
+
+export type Product = typeof products.$inferSelect;
+export type InsertProduct = z.infer<typeof insertProductSchema>;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertVRAsset = z.infer<typeof insertVRAssetSchema>;

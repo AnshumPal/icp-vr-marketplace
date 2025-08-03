@@ -2,6 +2,8 @@ import { users, vrAssets, transactions, type User, type InsertUser, type VRAsset
 import { db } from "./db";
 import { eq, desc } from "drizzle-orm";
 
+
+
 export interface IStorage {
   // User operations
   getUser(id: number): Promise<User | undefined>;
@@ -62,6 +64,12 @@ export class MemStorage implements IStorage {
       { username: "fantasy_realm", walletAddress: "ic2468...uvwx", balance: "4.95" },
       { username: "social_architect", walletAddress: "ic1357...yzab", balance: "6.30" },
       { username: "ocean_edu", walletAddress: "ic9753...cdef", balance: "1.75" },
+      { username: "fantasy_islands", walletAddress: "ic95643...cdef", balance: "3.45" },
+      { username: "solar", walletAddress: "ic9564...cdef", balance: "1.45" },
+      { username: "poetry", walletAddress: "ic1564...cdef", balance: "10.45" },
+      { username: "solarplanets", walletAddress: "ic9564...cdef", balance: "1.45" },
+      { username: "yoga_star", walletAddress: "ic9964...cdef", balance: "9.23" },
+      { username: "resumeworks", walletAddress: "ic8564...cdef", balance: "8.92" },
     ];
 
     sampleUsers.forEach(userData => {
@@ -85,6 +93,7 @@ export class MemStorage implements IStorage {
         fileSize: "15.2 MB",
         ownerId: 1,
       },
+     
       {
         title: "Virtual Office Hub",
         description: "Modern workplace with collaborative tools",
@@ -155,6 +164,58 @@ export class MemStorage implements IStorage {
         fileSize: "12.8 MB",
         ownerId: 8,
       },
+       {
+        title: "Floating Sky Islands",
+        description: "Explore mystical floating islands in the clouds with magical creatures and ancient secrets. This immersive VR experience features stunning visuals, interactive storytelling, and endless exploration opportunities.",
+        category: "fantasy",
+        price: "2.5",
+        previewUrl: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+        modelUrl: "/models/cyberpunk_arena.glb",
+        fileSize: "2.5 GB",
+        ownerId: 9,
+      },
+      {
+        title:"Solar System Theater Pod",
+        description: "Journey through our solar system in an immersive educational theater experience. Learn about planets, stars, and cosmic phenomena in stunning detail.",
+        category: "science",
+        price: "2.99",
+        previewUrl:  "https://images.unsplash.com/photo-1446776877081-d282a0f896e2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+        modelUrl: "/models/cyberpunk_arena.glb",
+        fileSize: "1.9 GB",
+        ownerId: 10,
+      },
+
+       {
+        title:"VR Poetry Stage",
+        description: "Express yourself in a virtual poetry stage with dynamic visuals and interactive elements. Create and share your artistic vision in this creative space.",
+        category:  "art",
+        price: "2.99",
+        previewUrl:  "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+        modelUrl: "/models/cyberpunk_arena.glb",
+        fileSize: "1.1 GB",
+        ownerId: 11,
+      },
+      {
+        title: "Yoga Nook",
+        description: "Find peace and tranquility in your personal virtual yoga and meditation sanctuary. Features guided sessions and customizable environments.",
+        category: "wellness",
+        price: "9.99",
+        previewUrl: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+        modelUrl: "/models/city_lounge.glb",
+        fileSize: "900 MB",
+         ownerId: 12,
+      },
+      {
+        title: "Resume Showcase Booth",
+        description: "Present your professional portfolio in an immersive virtual office environment. Perfect for job interviews and professional presentations.",
+        category: "utility",
+        price: "9.99",
+        previewUrl: "https://images.unsplash.com/photo-1497032628192-86f99bcd76bc?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+        modelUrl: "/models/city_lounge.glb",
+        fileSize: "1.5 GB",
+        ownerId:13,
+      },
+      
     ];
 
     sampleAssets.forEach(assetData => {
@@ -181,17 +242,30 @@ export class MemStorage implements IStorage {
     return Array.from(this.users.values()).find(user => user.walletAddress === walletAddress);
   }
 
+  // async createUser(insertUser: InsertUser): Promise<User> {
+  //   const id = this.currentUserId++;
+  //   const user: User = {
+  //     ...insertUser,
+  //     id,
+  //     balance: "0",
+  //     createdAt: new Date(),
+  //   };
+  //   this.users.set(id, user);
+  //   return user;
+  // }
+
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentUserId++;
-    const user: User = {
-      ...insertUser,
-      id,
-      balance: "0",
-      createdAt: new Date(),
-    };
-    this.users.set(id, user);
-    return user;
-  }
+  const id = this.currentUserId++;
+  const user: User = {
+    ...insertUser,
+    id,
+    balance: "0",
+    walletAddress: insertUser.walletAddress ?? null,
+    createdAt: new Date(),
+  };
+  this.users.set(id, user);
+  return user;
+}
 
   async updateUserBalance(id: number, balance: string): Promise<User | undefined> {
     const user = this.users.get(id);
@@ -214,7 +288,11 @@ export class MemStorage implements IStorage {
       }
     }
     
-    return result.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    return result.sort(
+  (a, b) =>
+    (b.createdAt ?? new Date(0)).getTime() -
+    (a.createdAt ?? new Date(0)).getTime()
+);
   }
 
   async getAssetById(id: number): Promise<VRAssetWithOwner | undefined> {
@@ -242,18 +320,41 @@ export class MemStorage implements IStorage {
     return result;
   }
 
+  // async createAsset(insertAsset: InsertVRAsset): Promise<VRAsset> {
+  //   const id = this.currentAssetId++;
+  //   const asset: VRAsset = {
+  //     ...insertAsset,
+  //     id,
+  //     isForSale: true,
+  //     createdAt: new Date(),
+  //     updatedAt: new Date(),
+  //   };
+  //   this.vrAssets.set(id, asset);
+  //   return asset;
+  // }
+  
   async createAsset(insertAsset: InsertVRAsset): Promise<VRAsset> {
     const id = this.currentAssetId++;
-    const asset: VRAsset = {
-      ...insertAsset,
-      id,
-      isForSale: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+   const asset: VRAsset = {
+  id: this.currentAssetId++,
+  title: insertAsset.title,
+  description: insertAsset.description,
+  category: insertAsset.category,
+  price: insertAsset.price,
+  previewUrl: insertAsset.previewUrl,
+  modelUrl: insertAsset.modelUrl ?? null, 
+  fileSize: insertAsset.fileSize ?? null, 
+  ownerId: insertAsset.ownerId,
+  isForSale: true,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+};
+
     this.vrAssets.set(id, asset);
     return asset;
   }
+
+  
 
   async updateAssetOwner(id: number, newOwnerId: number): Promise<VRAsset | undefined> {
     const asset = this.vrAssets.get(id);
@@ -266,20 +367,29 @@ export class MemStorage implements IStorage {
   }
 
   async createTransaction(insertTransaction: InsertTransaction): Promise<Transaction> {
-    const id = this.currentTransactionId++;
-    const transaction: Transaction = {
-      ...insertTransaction,
-      id,
-      createdAt: new Date(),
-    };
-    this.transactions.set(id, transaction);
-    return transaction;
-  }
+  const id = this.currentTransactionId++;
+
+  const transaction: Transaction = {
+    ...insertTransaction,
+    id,
+    createdAt: new Date(),
+    transactionHash: insertTransaction.transactionHash ?? null,
+    status: insertTransaction.status ?? "pending",
+  };
+
+  this.transactions.set(id, transaction);
+  return transaction;
+}
+
 
   async getTransactionsByUser(userId: number): Promise<Transaction[]> {
     return Array.from(this.transactions.values())
       .filter(tx => tx.buyerId === userId || tx.sellerId === userId)
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+      .sort(
+  (a, b) =>
+    (b.createdAt ?? new Date(0)).getTime() -
+    (a.createdAt ?? new Date(0)).getTime()
+);
   }
 
   async updateTransactionStatus(id: number, status: string): Promise<Transaction | undefined> {
@@ -437,7 +547,11 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(transactions.createdAt));
 
     return [...buyerTransactions, ...sellerTransactions]
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  .sort((a, b) => {
+    const aTime = a.createdAt ? a.createdAt.getTime() : 0;
+    const bTime = b.createdAt ? b.createdAt.getTime() : 0;
+    return bTime - aTime;
+  });
   }
 
   async updateTransactionStatus(id: number, status: string): Promise<Transaction | undefined> {
@@ -479,4 +593,6 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-export const storage = new DatabaseStorage();
+// export const storage = new DatabaseStorage();
+export const storage = new MemStorage();
+
