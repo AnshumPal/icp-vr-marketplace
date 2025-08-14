@@ -6,7 +6,7 @@ import { z } from "zod";
 import { MemStorage } from "./storage";
 
 
-const storage = new MemStorage();
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Get all VR assets
   app.get("/api/assets", async (req, res) => {

@@ -35,7 +35,7 @@ export const transactions = pgTable("transactions", {
   buyerId: integer("buyer_id").references(() => users.id).notNull(),
   sellerId: integer("seller_id").references(() => users.id).notNull(),
   price: decimal("price", { precision: 18, scale: 8 }).notNull(),
-  transactionHash: text("transaction_hash") ?? null,
+  transactionHash: text("transaction_hash"),
   status: text("status").notNull().default("pending"),
   createdAt: timestamp("created_at").defaultNow(),
 });
