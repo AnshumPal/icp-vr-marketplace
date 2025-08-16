@@ -3,6 +3,7 @@ import React, { Suspense, useRef } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera, Environment, useGLTF, Html } from '@react-three/drei';
 import { EffectComposer, Bloom, DepthOfField } from '@react-three/postprocessing';
+import * as THREE from 'three';
 // import { Html } from '@react-three/drei';
 
 type Props = {
@@ -114,7 +115,7 @@ function GLTFPlaceholder({ url }: { url: string }) {
 }
 
 function ScoreboardDisk() {
-  const ref = useRef<THREE.Mesh>(null!);
+  const ref = useRef<THREE.Group>(null!);
   const scores = ['TEAM A: 45', 'TEAM B: 38', 'ROUND 3', 'TIME: 02:15'];
   
   useFrame((_, delta) => {
@@ -125,17 +126,6 @@ function ScoreboardDisk() {
 
   return (
     <group position={[0, 6, 0]} ref={ref}>
-      {/* Disk */}
-      {/* <mesh rotation={[Math.PI / 2, 0, 0]}>
-        <cylinderGeometry args={[8, 8, 0.3, 64]} />
-        <meshStandardMaterial
-          color="#0a0d12"
-          metalness={0.8}
-          roughness={0.2}
-          emissive={[0.0, 0.6, 1]}
-          emissiveIntensity={1.2}
-        />
-      </mesh> */}
 
       {/* Score text positioned around edge */}
       {scores.map((text, i) => {
@@ -166,9 +156,9 @@ function ScoreboardDisk() {
 
 export default function CyberpunkArena({ modelUrl }: Props) {
   return (
-    <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: '#000' }}>
-      <Canvas shadows camera={{ position: [12, 6, 12], fov: 50 }}>
-        <Suspense fallback={null}>
+    <div style={{ width: '100%', height: '100%' }}>
+      <Canvas style={{ width: '100%', height: '100%' }} shadows camera={{ position: [12, 6, 12], fov: 50 }}>
+        <Suspense fallback={<Html center>Loading...</Html>}>
           <PerspectiveCamera makeDefault position={[10, 6, 10]} fov={50} />
           <Environment preset="city" />
           <ambientLight intensity={0.08} /> {/* darker ambience */}

@@ -3,6 +3,25 @@ import { Button } from "@/components/ui/button";
 import { X, Heart, Share } from "lucide-react";
 import type { VRAssetWithOwner } from "@shared/schema";
 import GlobeViewer from './GlobeViewer';
+import CyberpunkArena from "./models/CyberpunkArena";
+
+
+
+
+const modelViewers: Record<
+  string,
+  { Component: React.FC<any>; props?: Record<string, any> }
+> = {
+  "Space Station Alpha": {
+    Component: GlobeViewer,
+    props: { modelUrl: "/3d-assets/earth_globe.glb", backgroundUrl: "/3d-assets/stars.hdr" },
+  },
+  "Neon Cyberpunk Arena": {
+    Component: CyberpunkArena,
+    // props: { modelUrl: "/3d-assets/cyberpunk_arena.glb" },
+  },
+  // Add more as needed
+};
 
 interface Asset3DPreviewModalProps {
   open: boolean;
@@ -19,6 +38,14 @@ export default function Asset3DPreviewModal({
 }: Asset3DPreviewModalProps) {
 
   if (!asset) return null;
+
+const viewerEntry = modelViewers[
+  Object.keys(modelViewers).find(
+    k => asset.title.toLowerCase().includes(k.toLowerCase())
+  ) || ""
+];
+
+
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -40,18 +67,27 @@ export default function Asset3DPreviewModal({
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full">
               
               {/* Model viewer */}
-              <div className="lg:col-span-3 h-full overflow-hidden rounded-xl">
-                {asset.title === "Space Station Alpha" ? (
-                  <GlobeViewer 
-                    modelUrl="/3d-assets/earth_globe.glb" 
-                    backgroundUrl="/3d-assets/stars.hdr" 
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-black/20 rounded-xl">
-                    <p className="text-gray-400">3D Preview not available for this asset.</p>
+              
+
+                  <div className="lg:col-span-3 h-full overflow-hidden">
+                    {viewerEntry ? (
+                      // Use the mapped component
+                      (() => {
+                        const ViewerComponent = viewerEntry.Component;
+                        return viewerEntry.props ? (
+                          <ViewerComponent {...viewerEntry.props} />
+                        ) : (
+                          <ViewerComponent />
+                        );
+                      })()
+                    ) : (
+                      // Fallback if no match
+                      <div className="w-full h-full flex items-center justify-center bg-black/20 rounded-xl">
+                        <p className="text-gray-400">3D Preview not available for this asset.</p>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
+
 
               {/* Side panel */}
               <div className="space-y-6 overflow-y-auto pr-2">
@@ -121,7 +157,12 @@ export default function Asset3DPreviewModal({
             </div>
           </div>
         </div>
+        
       </DialogContent>
     </Dialog>
   );
+
 }
+
+
+
