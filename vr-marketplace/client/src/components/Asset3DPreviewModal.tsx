@@ -4,7 +4,7 @@ import { X, Heart, Share } from "lucide-react";
 import type { VRAssetWithOwner } from "@shared/schema";
 import GlobeViewer from './GlobeViewer';
 import CyberpunkArena from "./models/CyberpunkArena";
-
+import ArtGallery from "./models/DigitalArtGallery";
 
 
 
@@ -19,6 +19,9 @@ const modelViewers: Record<
   "Neon Cyberpunk Arena": {
     Component: CyberpunkArena,
     // props: { modelUrl: "/3d-assets/cyberpunk_arena.glb" },
+  },
+  "Digital Art Gallery":{
+    Component: ArtGallery,
   },
   // Add more as needed
 };
